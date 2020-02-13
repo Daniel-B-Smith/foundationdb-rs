@@ -681,7 +681,8 @@ impl StackMachine {
                 let a: i64 = self.pop_item().await;
                 let b: i64 = self.pop_item().await;
                 debug!("sub {:?} - {:?}", a, b);
-                self.push_item(number, &(a - b));
+                // wrapping sub to match bindingtester expected output
+                self.push_item(number, &(a.wrapping_sub(b)));
             }
             // Pops the top two items off the stack as A and B and then pushes
             // the concatenation of A and B onto the stack. A and B can be
@@ -1361,7 +1362,7 @@ impl StackMachine {
                     Ok(())
                 }
                 let r = db
-                    .transact(
+                    .transact_boxed_local(
                         (begin, end),
                         |trx, (begin, end)| wait_for_empty(trx, begin, end).boxed_local(),
                         TransactOption::default(),

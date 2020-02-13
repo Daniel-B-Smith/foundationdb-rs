@@ -1,4 +1,4 @@
-// Copyright 2018 foundationdb-rs developers, https://github.com/bluejekyll/foundationdb-rs/graphs/contributors
+// Copyright 2018 foundationdb-rs developers, https://github.com/Clikengo/foundationdb-rs/graphs/contributors
 //
 // Licensed under the Apache License, Version 2.0, <LICENSE-APACHE or
 // http://apache.org/licenses/LICENSE-2.0> or the MIT license <LICENSE-MIT or
@@ -72,7 +72,21 @@ async fn test_set_conflict_async() -> FdbResult<()> {
 
     // commit seconds transaction, which will cause conflict
     trx2.set(key, common::random_str(10).as_bytes());
-    assert!(trx2.commit().await.is_err());
+    let err = trx2.commit().await.unwrap_err();
+    assert_eq!(
+        err.message(),
+        "Transaction not committed due to conflict with another transaction"
+    );
+    assert_eq!(
+        format!("{}", err),
+        "Transaction not committed due to conflict with another transaction"
+    );
+    assert_eq!(
+        format!("{:?}", err),
+        "TransactionCommitError(Transaction not committed due to conflict with another transaction)"
+    );
+    assert_eq!(err.is_retryable(), true);
+    assert_eq!(err.is_retryable_not_committed(), true);
 
     Ok(())
 }
@@ -146,7 +160,7 @@ async fn test_transact_async() -> FdbResult<()> {
     let try_count = Arc::new(AtomicUsize::new(0));
     let db = common::database().await?;
     let res = db
-        .transact(
+        .transact_boxed(
             &db,
             |trx, db| async_body(db, trx, try_count.clone()).boxed(),
             TransactOption::default(),
@@ -204,6 +218,30 @@ async fn test_set_read_version_async() -> FdbResult<()> {
     let trx = db.create_trx()?;
     trx.set_read_version(0);
     assert!(trx.get(KEY, false).await.is_err());
+
+    Ok(())
+}
+
+#[test]
+fn test_get_addresses_for_key() {
+    common::boot();
+    futures::executor::block_on(test_get_addresses_for_key_async()).expect("failed to run")
+}
+async fn test_get_addresses_for_key_async() -> FdbResult<()> {
+    const KEY: &[u8] = b"test_get_addresses_for_key";
+
+    let db = common::database().await?;
+
+    let trx = db.create_trx()?;
+    trx.clear(KEY);
+    trx.commit().await?;
+
+    let trx = db.create_trx()?;
+    let addrs = trx.get_addresses_for_key(KEY).await?;
+    let mut it = addrs.iter();
+    let addr0 = it.next().unwrap();
+    eprintln!("{}", addr0.to_str().unwrap());
+    assert!(it.next().is_none());
 
     Ok(())
 }

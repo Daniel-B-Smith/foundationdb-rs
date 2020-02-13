@@ -1,8 +1,8 @@
 [package]
 name = "bindingtester"
-version = "0.4.0"
+version = "0.4.1"
 authors = [
-    "Benjamin Fry <benjaminfry@me.com>", 
+    "Benjamin Fry <benjaminfry@me.com>",
     "Vincent Rouillé <vincent@clikengo.com>",
 ]
 edition = "2018"
@@ -11,7 +11,7 @@ description = """
 Bindings to the C api for FoundationDB
 """
 
-repository = "https://github.com/bluejekyll/foundationdb-rs"
+repository = "https://github.com/Clikengo/foundationdb-rs"
 
 readme = "README.md"
 keywords = ["foundationdb", "kv"]
@@ -19,13 +19,10 @@ categories = ["database"]
 
 license = "MIT/Apache-2.0"
 
-[badges]
-travis-ci = { repository = "bluejekyll/foundationdb-rs" }
-
 [dependencies]
 env_logger = "0.7.1"
 foundationdb = { path = "../foundationdb", features = ["uuid"] }
-foundationdb-sys = { version = "0.4.0", path = "../foundationdb-sys", default-features = false }
+foundationdb-sys = { version = "0.4.1", path = "../foundationdb-sys", default-features = false }
 futures = "0.3.0"
 log = "0.4.8"
 structopt = "0.3.3"

@@ -1,4 +1,4 @@
-// Copyright 2018 foundationdb-rs developers, https://github.com/bluejekyll/foundationdb-rs/graphs/contributors
+// Copyright 2018 foundationdb-rs developers, https://github.com/Clikengo/foundationdb-rs/graphs/contributors
 // Copyright 2013-2018 Apple, Inc and the FoundationDB project authors.
 //
 // Licensed under the Apache License, Version 2.0, <LICENSE-APACHE or
@@ -25,6 +25,7 @@ use futures::{
 };
 
 /// A committed transaction.
+#[derive(Debug)]
 pub struct TransactionCommitted {
     tr: Transaction,
 }
@@ -113,6 +114,12 @@ impl From<TransactionCommitError> for FdbError {
 
 impl fmt::Debug for TransactionCommitError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "TransactionCommitError({})", self.err)
+    }
+}
+
+impl fmt::Display for TransactionCommitError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.err.fmt(f)
     }
 }
@@ -121,6 +128,7 @@ impl fmt::Debug for TransactionCommitError {
 type TransactionResult = Result<TransactionCommitted, TransactionCommitError>;
 
 /// A cancelled transaction
+#[derive(Debug)]
 pub struct TransactionCancelled {
     tr: Transaction,
 }
@@ -148,6 +156,7 @@ impl From<TransactionCancelled> for Transaction {
 /// Transactions group operations into a unit with the properties of atomicity, isolation, and durability. Transactions also provide the ability to maintain an application’s invariants or integrity constraints, supporting the property of consistency. Together these properties are known as ACID.
 ///
 /// Transactions are also causally consistent: once a transaction has been successfully committed, all subsequently created transactions will see the modifications made by it.
+#[derive(Debug)]
 pub struct Transaction {
     // Order of fields should not be changed, because Rust drops field top-to-bottom, and
     // transaction should be dropped before cluster.
@@ -280,6 +289,15 @@ impl<'a> From<(KeySelector<'a>, KeySelector<'a>)> for RangeOption<'a> {
         }
     }
 }
+impl From<(Vec<u8>, Vec<u8>)> for RangeOption<'static> {
+    fn from((begin, end): (Vec<u8>, Vec<u8>)) -> Self {
+        Self {
+            begin: KeySelector::first_greater_or_equal(begin),
+            end: KeySelector::first_greater_or_equal(end),
+            ..Self::default()
+        }
+    }
+}
 impl<'a> From<(&'a [u8], &'a [u8])> for RangeOption<'a> {
     fn from((begin, end): (&'a [u8], &'a [u8])) -> Self {
         Self {
@@ -298,6 +316,23 @@ impl<'a> Into<RangeOption<'a>> for std::ops::Range<KeySelector<'a>> {
 impl<'a> Into<RangeOption<'a>> for std::ops::Range<&'a [u8]> {
     fn into(self) -> RangeOption<'a> {
         RangeOption::from((self.start, self.end))
+    }
+}
+impl Into<RangeOption<'static>> for std::ops::Range<Vec<u8>> {
+    fn into(self) -> RangeOption<'static> {
+        RangeOption::from((self.start, self.end))
+    }
+}
+impl<'a> Into<RangeOption<'a>> for std::ops::RangeInclusive<&'a [u8]> {
+    fn into(self) -> RangeOption<'a> {
+        let (start, end) = self.into_inner();
+        (KeySelector::first_greater_or_equal(start)..KeySelector::first_greater_than(end)).into()
+    }
+}
+impl Into<RangeOption<'static>> for std::ops::RangeInclusive<Vec<u8>> {
+    fn into(self) -> RangeOption<'static> {
+        let (start, end) = self.into_inner();
+        (KeySelector::first_greater_or_equal(start)..KeySelector::first_greater_than(end)).into()
     }
 }
 

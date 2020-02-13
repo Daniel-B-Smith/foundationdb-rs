@@ -1,4 +1,4 @@
-// Copyright 2018 foundationdb-rs developers, https://github.com/bluejekyll/foundationdb-rs/graphs/contributors
+// Copyright 2018 foundationdb-rs developers, https://github.com/Clikengo/foundationdb-rs/graphs/contributors
 //
 // Licensed under the Apache License, Version 2.0, <LICENSE-APACHE or
 // http://apache.org/licenses/LICENSE-2.0> or the MIT license <LICENSE-MIT or
@@ -72,7 +72,7 @@ async fn test_hca_concurrent_allocations_async() -> FdbResult<()> {
     let hca = HighContentionAllocator::new(Subspace::from_bytes(KEY));
 
     let all_ints: Vec<i64> = future::try_join_all((0..N).map(|_| {
-        db.transact(
+        db.transact_boxed_local(
             &hca,
             move |tx, hca| hca.allocate(tx).boxed_local(),
             TransactOption::default(),

@@ -1,4 +1,4 @@
-// Copyright 2018 foundationdb-rs developers, https://github.com/bluejekyll/foundationdb-rs/graphs/contributors
+// Copyright 2018 foundationdb-rs developers, https://github.com/Clikengo/foundationdb-rs/graphs/contributors
 // Copyright 2013-2018 Apple, Inc and the FoundationDB project authors.
 //
 // Licensed under the Apache License, Version 2.0, <LICENSE-APACHE or
@@ -153,7 +153,7 @@ async fn ditch_trx(trx: &Transaction, student: &str, class: &str) {
 }
 
 async fn ditch(db: &Database, student: String, class: String) -> Result<()> {
-    db.transact(
+    db.transact_boxed_local(
         (student, class),
         move |trx, (student, class)| ditch_trx(trx, student, class).map(|_| Ok(())).boxed_local(),
         fdb::TransactOption::default(),
@@ -205,7 +205,7 @@ async fn signup_trx(trx: &Transaction, student: &str, class: &str) -> Result<()>
 }
 
 async fn signup(db: &Database, student: String, class: String) -> Result<()> {
-    db.transact(
+    db.transact_boxed_local(
         (student, class),
         |trx, (student, class)| signup_trx(&trx, student, class).boxed_local(),
         TransactOption::default(),
@@ -230,7 +230,7 @@ async fn switch_classes(
         Ok(())
     }
 
-    db.transact(
+    db.transact_boxed_local(
         (student_id, old_class, new_class),
         move |trx, (student_id, old_class, new_class)| {
             switch_classes_body(trx, student_id, old_class, new_class).boxed_local()

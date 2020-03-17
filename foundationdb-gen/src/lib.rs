@@ -28,6 +28,7 @@ impl FdbScope {
         } else {
             writeln!(w, "#[derive(Clone, Copy, Debug)]")?;
         }
+        writeln!(w, "#[non_exhaustive]")?;
         writeln!(w, "pub enum {name} {{", name = self.name)?;
 
         let with_ty = self.with_ty();
@@ -325,7 +326,7 @@ where
     I: Iterator<Item = xml::reader::Result<XmlEvent>>,
 {
     let mut options = Vec::new();
-    while let Some(e) = parser.next() {
+    for e in parser {
         let e = e?;
         match e {
             XmlEvent::StartElement {
@@ -372,7 +373,7 @@ const OPTIONS_DATA: &[u8] = include_bytes!("../include/610/fdb.options");
 const OPTIONS_DATA: &[u8] = include_bytes!("../include/620/fdb.options");
 
 pub fn emit() -> Result<String> {
-    let mut reader = OPTIONS_DATA.as_ref();
+    let mut reader = OPTIONS_DATA;
     let parser = EventReader::new(&mut reader);
     let mut iter = parser.into_iter();
     let mut scopes = Vec::new();

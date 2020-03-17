@@ -70,10 +70,9 @@
 //!     Ok(())
 //! }
 //!
-//! let network = foundationdb::boot().expect("failed to initialize Fdb");
-//! futures::executor::block_on(async_main()).expect("failed to run");
-//! // cleanly shutdown the client
-//! drop(network);
+//! foundationdb::boot(|| {
+//!     futures::executor::block_on(async_main()).expect("failed to run");
+//! });
 //! ```
 //!
 //! ## API stability
@@ -105,24 +104,43 @@ pub use crate::error::FdbResult;
 pub use crate::keyselector::*;
 pub use crate::transaction::*;
 
-/// Initialize the FoundationDB Client API, this can only be called once per process.
-///
-/// # Returns
-///
-/// `Network` which must be run before the Client is ready. `Network::run` will not return until the
-///   network is stopped with the associated `Network::stop` and should be run in a separate thread.
+/// Execute `f` with the FoundationDB Client API ready, this can only be called once per process.
 ///
 /// # Examples
 ///
 /// ```rust
-/// let network = foundationdb::boot().expect("failed to initialize Fdb");
-///
-/// // do some interesting things with the API...
-///
-/// drop(network)
+/// foundationdb::boot(|| {
+///     // do some interesting things with the API...
+/// });
 /// ```
-pub fn boot() -> FdbResult<api::NetworkAutoStop> {
-    api::FdbApiBuilder::default().build()?.boot()
+pub fn boot<T>(f: impl (FnOnce() -> T) + std::panic::UnwindSafe) -> T {
+    api::FdbApiBuilder::default()
+        .build()
+        .expect("foundationdb API to be initialized")
+        .boot(f)
+        .expect("foundationdb network to be setup")
+}
+
+/// Async execute `f` with the FoundationDB Client API ready, this can only be called once per process.
+///
+/// # Examples
+///
+/// ```rust
+/// foundationdb::boot_async(|| async {
+///     // do some interesting things with the API...
+/// });
+/// ```
+pub async fn boot_async<F, Fut, T>(f: F) -> T
+where
+    F: (FnOnce() -> Fut) + std::panic::UnwindSafe,
+    Fut: std::future::Future<Output = T> + std::panic::UnwindSafe,
+{
+    api::FdbApiBuilder::default()
+        .build()
+        .expect("foundationdb API to be initialized")
+        .boot_async(f)
+        .await
+        .expect("foundationdb network to be setup")
 }
 
 /// Returns the default Fdb cluster configuration file path

@@ -4,7 +4,7 @@ This is a wrapper library around the FoundationDB (Fdb) C API. It implements fut
 
 ## Prerequisites
 
-Rust 1.39+
+Rust 1.40+
 
 ### Install FoundationDB
 
@@ -49,7 +49,7 @@ use futures::prelude::*;
 
 async fn async_main() -> foundationdb::FdbResult<()> {
     let db = foundationdb::Database::default()?;
-    
+
     // write a value
     let trx = db.create_trx()?;
     trx.set(b"hello", b"world"); // errors will be returned in the future result
@@ -65,12 +65,11 @@ async fn async_main() -> foundationdb::FdbResult<()> {
     Ok(())
 }
 
-let network = foundationdb::boot().expect("failed to initialize Fdb");
-futures::executor::block_on(async_main()).expect("failed to run");
-// cleanly shutdown the client
-drop(network);
+foundationdb::boot(|| {
+    futures::executor::block_on(async_main()).expect("failed to run");
+});
 ```
 
 ## API stability
 
-*WARNING* Until the 1.0 release of this library, the API may be in constant flux.
+_WARNING_ Until the 1.0 release of this library, the API may be in constant flux.

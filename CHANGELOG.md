@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 0.5.0
+
+- #179, #182: Fix possible runloop undefined behaviors
+  (`fdb_stop_network` **MUST** be called before the program exits, see issues #170, #181).
+  Fixing it required a breaking change with the `foundationdb::boot()` API
+- #177: Add support for NEGINTSTART, POSINTEND encoding (@garrensmith)
+- #178: Add support for `num-bigint`
+- #184: Fix use after free in `Database::new`, `Cluster::new`
+- #187: Add `#[non_exhaustive]` on generated enums
+
+## 0.4.2
+
+- #183: Fix use after free in `Database::new`, `Cluster::new`
+
 ## 0.4.1
 
 - Fix docs.rs build issues
